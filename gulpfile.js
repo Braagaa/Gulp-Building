@@ -7,6 +7,8 @@ const imagemin = require('gulp-imagemin');
 const rename = require('gulp-rename');
 const useref = require('gulp-useref');
 const replace = require('gulp-replace');
+const cached = require('gulp-cached');
+const remember = require('gulp-remember');
 const bSync = require('browser-sync');
 const del = require('del');
 
@@ -21,9 +23,11 @@ const sassScssFiles = ['sass/*.scss', 'sass/**/**/*.sass'].map(fromSrc);
 
 gulp.task('scripts', () => 
     gulp.src(fromSrc('js/**/*.js'))
+        .pipe(cached('ugly'))
         .pipe(sourcemaps.init())
-        .pipe(concat('all.min.js'))
         .pipe(uglify())
+        .pipe(remember('ugly'))
+        .pipe(concat('all.min.js'))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(toProduction('scripts')))
 );
@@ -71,6 +75,10 @@ gulp.task('reload', done => {
 gulp.task('clean', () => del([production]));
 
 gulp.task('watch', done => {
+    gulp.watch(
+        fromSrc('js/**/*.js'), 
+        gulp.series('scripts', 'reload')
+    );
     gulp.watch(sassScssFiles, gulp.series('styles', 'reload'));
     done();
 });
